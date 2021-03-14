@@ -17,6 +17,6 @@ External Modules for Synergy, some also Synergizes with Middel's Masterflix V3, 
 | PasteLogs | 1.0.0 | <details><summary>Allows reading and automated response to certain keywords.</summary>Meant to work in any case of Staff members not being online to render assistance to those seeking it. Still very much a WIP.</details> |
 | Reactify | 1.0.0 | <details><summary>Automated reactions when trigger words are detected in chat.</summary>Useful in sync with reaction roles cogs.</details> |
 
-# Synergy Discord Python Bot
+# ================Synergy Discord Python Bot================
 
 <a href="https://gitlab.com/calebtaybw/Synergy"><img src="https://www.scooxer.com/wp-content/uploads/2019/03/Slogo_Nur-Logo.jpg" alt="Synergy - Discord Bot"></a>
