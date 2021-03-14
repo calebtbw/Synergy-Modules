@@ -1,7 +1,8 @@
 <p align="center">
 <a href="https://github.com/Rapptz/discord.py"><img src="https://img.shields.io/static/v1?label=Discord&message=py&color=blue&style=flat&logo=discord"></a>
 <img src="https://img.shields.io/badge/code%20style-black-000000.svg">
-<a href="https://www.python.org/"><img src="https://img.shields.io/static/v1?label=Python&message=3.8.1&color=blue&style=flat&logo=python"></a></p>
+<a href="https://www.python.org/"><img src="https://img.shields.io/static/v1?label=Python&message=3.8.1&color=blue&style=flat&logo=python"></a>
+</p>
 
 # Synergy Modules
 
