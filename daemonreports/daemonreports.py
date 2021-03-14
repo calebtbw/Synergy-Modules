@@ -6,7 +6,7 @@ import time
 
 from typing import Optional, Union
 
-from synergy.core import checks, Config, commands
+from synergy.core import checks, commands, Config
 from synergy.core.bot import Synergy
 from synergy.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from synergy.core.utils.mod import is_admin_or_superior
@@ -188,6 +188,12 @@ class DaemonReports(commands.Cog):
                         f"Report created for {user.display_name}\n"
                         "Only Staff may close this by running `[p]daemonreports close`."
                     )
+        
+        embed = discord.Embed(title="Report Instructions",
+                              description="Run `!dr create <nodeID> [error]` to create a comprehensive report.\n"
+                                          "Example: `!dr create 1000 Can't connect to daemon (110: Connection Timed out).`", color=discord.Color.blue())
+        
+        await created_channel.send(embed=embed)
 
         # To prevent race conditions.
         async with self.config.guild(guild).created() as created:
@@ -214,6 +220,7 @@ class DaemonReports(commands.Cog):
                             f"Report created by {user.mention} has been opened.\n"
                             f"Click [here]({sent.jump_url}) to jump to the start of the report."
                         ),
+                        color=discord.Color.dark_red()
                     )
                     description = ""
                     if guild_settings["usercanclose"]:
@@ -272,6 +279,7 @@ class DaemonReports(commands.Cog):
         embed = discord.Embed(title="DaemonReports System Commands:",
                               description="**!dr add** - Adds a user to the current daemon report.\n"
                                           "**!dr close** - Close the created report.\n"
+                                          "**!dr create** - For users to input their Node ID and Error.\n"
                                           "**!dr remove** - Remove a user from the current report.\n"
                                           "**!dr settings** - Manage settings for daemon reports.", color=discord.Color.blue())
 
@@ -279,6 +287,23 @@ class DaemonReports(commands.Cog):
         embed.set_footer(text="Made by: Caleb | DaemonReports v1.0.0")
 
         await ctx.send(embed=embed)
+
+    @daemonreports.command()
+    async def create(self, ctx, node: int, *, error: Optional[str]):
+        """For users to input their Node ID and Error.
+        To be used in the created channel only."""
+        embed = discord.Embed(title="Daemon Report Info",
+                                description="For Staff to take note of the Node ID and Error Message.",
+                                color=discord.Color.blue())
+
+        fields = [("Node ID:", node, False),
+                  ("Error:", f"{error}", False)]
+
+        for name, value, inline in fields:
+            embed.add_field(name=name, value=value, inline=inline)
+
+        await ctx.send(embed=embed)
+        return await ctx.send("Thank you for reporting the issue. Any updates to the report will be done so via this channel.")
 
     @daemonreports.command()
     async def close(self, ctx, *, reason=None):
@@ -340,7 +365,7 @@ class DaemonReports(commands.Cog):
                             f"Report created by {author.mention if author else author_id} "
                             f"has been closed by {ctx.author.mention}."
                         ),
-                        color=await ctx.embed_color(),
+                        color=discord.Color.dark_green(),
                     )
                     if reason:
                         embed.add_field(name="Reason", value=reason)
@@ -359,7 +384,7 @@ class DaemonReports(commands.Cog):
             embed = discord.Embed(
                 title="Report Closed",
                 description=(f"Your report has been closed by {ctx.author.mention}."),
-                color=await ctx.embed_color(),
+                color=discord.Color.dark_green(),
             )
             if reason:
                 embed.add_field(name="Reason", value=reason)
@@ -374,7 +399,7 @@ class DaemonReports(commands.Cog):
                             user, send_messages=False, read_messages=True
                         )
             await ctx.send(
-                f"Report for {author.display_name if author else author_id} has been closed.  "
+                f"Report for {author.display_name if author else author_id} has been closed.\n"
                 "Channel will be moved to archive in 30 seconds."
             )
 
@@ -433,7 +458,7 @@ class DaemonReports(commands.Cog):
                 except discord.HTTPException:
                     with contextlib.suppress(discord.HTTPException):
                         await ctx.send(
-                            'Failed to delete channel.  Please ensure I have "Manage Channels" '
+                            'Failed to delete channel. Please ensure I have "Manage Channels" '
                             "permission in the category."
                         )
 
@@ -473,7 +498,7 @@ class DaemonReports(commands.Cog):
                 await ctx.send("You do not have an open report.")
             else:
                 await ctx.send(
-                    "Failed to determine report.  "
+                    "Failed to determine report.\n"
                     "Please run command in the corresponding report channel."
                 )
             return
@@ -833,7 +858,7 @@ class DaemonReports(commands.Cog):
         async with self.config.guild(ctx.guild).archive() as data:
             data["category"] = category.id
         await ctx.send(
-            f"Closed report channels will now be moved to the {category.name} category, "
+            f"Closed report channels will now be moved to the {category.name} category,"
             "if Archive mode is enabled."
         )
 
@@ -895,13 +920,13 @@ class DaemonReports(commands.Cog):
                 if channel.name == f"report-{user}":
                     channels.append(channel)
             message = await ctx.send(
-                f"Are you sure you want to remove all archived report channels from user {user}?  "
+                f"Are you sure you want to remove all archived report channels from user {user}?\n"
                 f"This will delete {len(channels)} Text Channels."
             )
         else:
             channels = category.text_channels
             message = await ctx.send(
-                "Are you sure you want to remove all archived report channels?  "
+                "Are you sure you want to remove all archived report channels?\n"
                 f"This will delete {len(channels)} Text Channels."
             )
 
@@ -909,13 +934,14 @@ class DaemonReports(commands.Cog):
         pred = ReactionPredicate.yes_or_no(message, ctx.author)
         await self.bot.wait_for("reaction_add", check=pred)
         if pred.result is True:
+            await message.delete()
             progress = await ctx.send("Purging text channels...")
             for channel in channels:
                 try:
                     await channel.delete()
                 except discord.Forbidden:
                     await ctx.send(
-                        "I do not have permission to delete those text channels.  "
+                        "I do not have permission to delete those text channels.\n"
                         'Make sure I have "Manage Channels" permission.'
                     )
                     return
@@ -925,6 +951,7 @@ class DaemonReports(commands.Cog):
             await progress.edit(content="Channels successfully purged.")
         else:
             await ctx.send("Channel purge cancelled.")
+            return await message.delete()
 
     @settings.command()
     async def enable(self, ctx, yes_or_no: Optional[bool] = None):
@@ -937,7 +964,7 @@ class DaemonReports(commands.Cog):
         )
         if channel_id == message_id == 0:
             await ctx.send(
-                "Please set the message to listen on first with"
+                "Please set the message to listen on first with "
                 f"`{ctx.prefix}daemonreports settings setmsg`."
             )
             return
@@ -978,7 +1005,7 @@ class DaemonReports(commands.Cog):
             await message.add_reaction(emoji)
         except discord.HTTPException:
             await ctx.send(
-                "Failed to react to set message with emoji.  "
+                "Failed to react to set message with emoji.\n"
                 "Are you sure the emoji is valid and I have Add Reactions permission?"
             )
             return
@@ -1006,7 +1033,7 @@ class DaemonReports(commands.Cog):
         if archive["enabled"]:
             if not archive["category"]:
                 await ctx.send(
-                    "Archive mode is enabled but no category is set.  "
+                    "Archive mode is enabled but no category is set.\n"
                     f"Please set one with `{ctx.prefix}daemonreports settings archive category`."
                 )
                 return
@@ -1014,7 +1041,7 @@ class DaemonReports(commands.Cog):
             archive_category = self.bot.get_channel(archive["category"])
             if not archive_category:
                 await ctx.send(
-                    "Archive mode is enabled but set category does not exist.  "
+                    "Archive mode is enabled but set category does not exist.\n"
                     f"Please reset it with `{ctx.prefix}daemonreports settings archive category`."
                 )
                 return
@@ -1022,7 +1049,7 @@ class DaemonReports(commands.Cog):
             if not archive_category.permissions_for(ctx.guild.me).manage_channels:
                 await ctx.send(
                     "Archive mode is enabled but I do not have permission to manage channels in "
-                    "set category.  Please reconfigure my permissions to allow me to "
+                    "set category. Please reconfigure my permissions to allow me to "
                     '"Manage Channels".'
                 )
                 return
@@ -1033,13 +1060,13 @@ class DaemonReports(commands.Cog):
             report_channel = self.bot.get_channel(report)
             if not report_channel:
                 await ctx.send(
-                    "Reporting is enabled but the channel has been deleted.  "
+                    "Reporting is enabled but the channel has been deleted.\n"
                     f"Please reset it with `{ctx.prefix}daemonreports settings report`."
                 )
 
             if not report_channel.permissions_for(ctx.guild.me).send_messages:
                 await ctx.send(
-                    "Reporting is enabled but I do not have proper permissions.  "
+                    "Reporting is enabled but I do not have proper permissions.\n"
                     "Please reconfigure my permissions to allow me Read and Send Messages."
                 )
                 return
