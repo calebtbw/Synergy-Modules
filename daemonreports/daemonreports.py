@@ -220,7 +220,7 @@ class DaemonReports(commands.Cog):
                             f"Report created by {user.mention} has been opened.\n"
                             f"Click [here]({sent.jump_url}) to jump to the start of the report."
                         ),
-                        color=discord.Color.dark_red()
+                        color=discord.Color.dark_green()
                     )
                     description = ""
                     if guild_settings["usercanclose"]:
@@ -365,7 +365,7 @@ class DaemonReports(commands.Cog):
                             f"Report created by {author.mention if author else author_id} "
                             f"has been closed by {ctx.author.mention}."
                         ),
-                        color=discord.Color.dark_green(),
+                        color=discord.Color.dark_red(),
                     )
                     if reason:
                         embed.add_field(name="Reason", value=reason)
@@ -384,7 +384,7 @@ class DaemonReports(commands.Cog):
             embed = discord.Embed(
                 title="Report Closed",
                 description=(f"Your report has been closed by {ctx.author.mention}."),
-                color=discord.Color.dark_green(),
+                color=discord.Color.dark_red(),
             )
             if reason:
                 embed.add_field(name="Reason", value=reason)
@@ -1006,7 +1006,7 @@ class DaemonReports(commands.Cog):
         except discord.HTTPException:
             await ctx.send(
                 "Failed to react to set message with emoji.\n"
-                "Are you sure the emoji is valid and I have Add Reactions permission?"
+                "Are you sure the emoji is valid and I have the Add Reactions permission?"
             )
             return
 
