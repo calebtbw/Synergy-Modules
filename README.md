@@ -6,7 +6,7 @@
 
 # Synergy Modules
 
-External Modules for Synergy, some also Synergizes with Fabian(Middel)'s Masterflix V3, GGServers Modules.
+External Modules for Synergy, some also Synergizes with Middel's Masterflix V3, GGServers Modules.
 
 | Cog | Version | Description |
 | --- | ------- | ----------- |
