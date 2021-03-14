@@ -2,7 +2,7 @@ import copy
 import discord
 
 from synergy.core import checks, commands, Config
-from synerg.core.utils.chat_formatting import pagify
+from synergy.core.utils.chat_formatting import pagify
 
 
 class Reactify(commands.Cog):
