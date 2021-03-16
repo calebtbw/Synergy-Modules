@@ -636,7 +636,7 @@ class DaemonReports(commands.Cog):
                              description="**!dr settings archive** - Customize settings for archiving daemon report channels.\n"
                                          "**!dr settings blacklist** - Add or remove a user to be prevented from creating reports.\n"
                                          "**!dr settings category** - Set the category to create new daemon report channels under.\n"
-                                         "**!dr settings creationmessage** -  Set the message that is sent when users create a report.\n"
+                                         "**!dr settings creationmessage** - Set the message that is sent when users create a report.\n"
                                          "**!dr settings disable** - Disable reporting system.\n"
                                          "**!dr settings dm** - Set whether or not to send a DM to the report author once a report is closed.\n"
                                          "**!dr settings enable** - Enable reporting system.", 
@@ -1033,7 +1033,7 @@ class DaemonReports(commands.Cog):
                 if not emoji:
                     await self.config.guild(ctx.guild).reaction.set("🎫")
                     await ctx.send(
-                        "Set custom emoji is invalid.  Ensure that the emoji still exists?\n"
+                        "Set custom emoji is invalid. Please ensure that the emoji still exists.\n"
                         "If you would like to bypass this and go with the default, "
                         "re-run this command."
                     )
@@ -1105,11 +1105,11 @@ class DaemonReports(commands.Cog):
                 if not report_channel.permissions_for(ctx.guild.me).send_messages:
                     await ctx.send(
                         "Reporting is enabled but I do not have proper permissions.\n"
-                        "Please reconfigure my permissions to allow me Read and Send Messages."
+                        "Please reconfigure my permissions to allow me to Read and Send Messages."
                     )
                     return
 
-            # Checks passed, let's cleanup a little bit and then enable.
+            # Checks passed, let's cleanup a little bit and then enable it.
             await message.clear_reactions()
             await message.add_reaction(emoji)
             await self.config.guild(ctx.guild).enabled.set(True)
