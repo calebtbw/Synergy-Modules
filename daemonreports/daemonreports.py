@@ -288,7 +288,7 @@ class DaemonReports(commands.Cog):
                                           color=discord.Color.blue())
 
         embed.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
-        embed.set_footer(text="Made by: Caleb | DaemonReports v1.0.0")
+        embed.set_footer(text="Made by: Caleb | DaemonReports v1.0.1")
 
         await ctx.send(embed=embed)
 
