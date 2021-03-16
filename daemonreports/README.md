@@ -1,5 +1,5 @@
 ## DR System Commands
-These commands are for the DaemonReports System for GGServers Discord. Mostly for Moderators & Helpers usage.
+These commands are for the Daemon Reports System for GGServers Discord. Mostly for Moderators & Helpers usage.
 
 - `!dr add` - Adds a user to the current daemon report.
 - `!dr close` - Close the created report.
@@ -8,7 +8,7 @@ These commands are for the DaemonReports System for GGServers Discord. Mostly fo
 - `!dr settings` - Manage settings for daemon reports.
 
 ## DR Settings Commands
-These commands are for the DaemonReports Settings for GGServers Discord. Note that some of these have subcommands. 
+These commands are for the Daemon Reports Settings for GGServers Discord. Note that some of these have subcommands. 
 
 - `!dr settings archive` - Customize settings for archiving daemon report channels.
 - `!dr settings blacklist` - Add or remove a user to be prevented from creating reports.
