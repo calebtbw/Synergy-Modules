@@ -14,7 +14,6 @@ from synergy.core.utils.mod import is_admin_or_superior
 from synergy.core.utils.predicates import ReactionPredicate
 
 
-
 class DaemonReports(commands.Cog):
     def __init__(self, bot: Synergy):
         self.bot: Synergy = bot
