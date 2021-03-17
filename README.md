@@ -16,6 +16,7 @@ External Modules for Synergy, some also Synergizes with Middel's Masterflix V3, 
 | HelpDesk | 1.6.6 | <details><summary>Commands to send out for Staff to help Discord Members.</summary>Helps especially for larger servers with a larger member base. Pagination included for ease of access and as many pages as you like.</details> |
 | PasteLogs | 1.0.0 | <details><summary>Allows reading and automated response to certain keywords.</summary>Meant to work in any case of Staff members not being online to render assistance to those seeking it. Still very much a WIP.</details> |
 | Reactify | 1.0.0 | <details><summary>Automated reactions when trigger words are detected in chat.</summary>Useful in sync with reaction roles cogs.</details> |
+| SynergyLogs | 1.0.0 | <details><summary>Logs all Activities.</summary>User Updates, Join/Leave, Ban/Unban, Voice State and more.</details> |
 
 # Synergy Discord Python Bot
 
