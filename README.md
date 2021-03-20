@@ -14,6 +14,7 @@ External Modules for Synergy, some also Synergizes with Middel's Masterflix V3, 
 | CryptoCurrency | 1.0.0 | Cog to have a laugh at money I am either losing or gaining. |
 | DaemonReports | 1.0.1 | <details><summary>Reporting System for GGServers Discord.</summary>Reactions to a specified message allows users to generate a report which can be managed easily by Staff.</details> |
 | HelpDesk | 1.6.6 | <details><summary>Commands to send out for Staff to help Discord Members.</summary>Helps especially for larger servers with a larger member base. Pagination included for ease of access and as many pages as you like.</details> |
+| NodeStatus | 1.0.0 | <details><summary>[WIP] Node Status from status.ggservers.com</summary>Pulls data from the URL on command, reports uptime and changes in an embed.</details> |
 | PasteLogs | 1.0.0 | <details><summary>Allows reading and automated response to certain keywords.</summary>Meant to work in any case of Staff members not being online to render assistance to those seeking it. Still very much a WIP.</details> |
 | Reactify | 1.0.0 | <details><summary>Automated reactions when trigger words are detected in chat.</summary>Useful in sync with reaction roles cogs.</details> |
 | SynergyLogs | 1.0.0 | <details><summary>Logs all Activities.</summary>User Updates, Join/Leave, Ban/Unban, Voice State and more.</details> |
