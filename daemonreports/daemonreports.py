@@ -13,6 +13,9 @@ from synergy.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTR
 from synergy.core.utils.mod import is_admin_or_superior
 from synergy.core.utils.predicates import ReactionPredicate
 
+__version__ = "1.0.2"
+__author__ = "Caleb T."
+
 
 class DaemonReports(commands.Cog):
     def __init__(self, bot: Synergy):
@@ -29,7 +32,7 @@ class DaemonReports(commands.Cog):
             # Post-Creation Settings.
             "category": 0,
             "archive": {"category": 0, "enabled": False},
-            "dm": True,
+            "dm": False,
             # Misc
             "supportroles": [],
             "blacklist": [],
@@ -191,8 +194,7 @@ class DaemonReports(commands.Cog):
                     )
         
         embed = discord.Embed(title="Report Instructions",
-                              description="Run `!dr create <nodeID> [error]` to create a comprehensive report.\n"
-                                          "Example: `!dr create 1000 Can't connect to daemon (110: Connection Timed out).`", 
+                              description="Run `!dr create` and follow the instructions to create a report.", 
                                           color=discord.Color.blue())
         
         await created_channel.send(embed=embed)
@@ -288,27 +290,71 @@ class DaemonReports(commands.Cog):
                                           color=discord.Color.blue())
 
         embed.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
-        embed.set_footer(text="Made by: Caleb | DaemonReports v1.0.1")
 
         await ctx.send(embed=embed)
 
     @daemonreports.command()
-    async def create(self, ctx, node: int, *, error: Optional[str]):
+    async def create(self, ctx):
         """For users to input their Node ID and Error.
         To be used in the created channel only."""
-        embed = discord.Embed(title="Daemon Report Info",
-                              description="For Staff to take note of the Node ID and Error Message.",
-                              color=discord.Color.blue(), 
-                              timestamp=datetime.utcnow())
+        initial_msg = await ctx.send(
+            "You will be asked 2 questions for information regarding your daemon report. Please respond accordingly."
+        )
 
-        fields = [("Node ID:", node, False),
-                  ("Error:", f"{error}", False)]
+        def check(message):
+            return message.author.id == ctx.message.author.id and message.content != ""
+
+        q1 = await ctx.send(
+            "Please input your Node ID:"
+        )
+        try:
+            r1 = await self.bot.wait_for(
+                "message", timeout=60, check=check
+            )
+            node = r1.content
+
+        except asyncio.TimeoutError:
+            await ctx.send(
+                "You took too long to provide the requested information.\n"
+                "Please try again by running `!dr create`."
+            )
+            return
+      
+        q2 = await ctx.send(
+            "Please state the Error Message:"
+        )
+        try:
+            r2 = await self.bot.wait_for(
+                "message", timeout=60, check=check
+            )
+            error = r2.content
+
+        except asyncio.TimeoutError:
+            await ctx.send(
+                "You took too long to provide the requested information.\n"
+                "Please try again by running `!dr create`."
+            )
+            return       
+    
+        e = discord.Embed(
+            title="Daemon Report Info",
+            description="For Staff to note the reported Node ID and Error Message.",
+            color=discord.Color.blue(),
+            timestamp=datetime.utcnow()
+        )
+
+        fields = [
+            ("Node ID:", f"{node}", False),
+            ("Error:", f"{error}", False)
+        ]
 
         for name, value, inline in fields:
-            embed.add_field(name=name, value=value, inline=inline)
+            e.add_field(name=name, value=value, inline=inline)
 
-        await ctx.send(embed=embed)
-        return await ctx.send("Thank you for reporting the issue. Any updates to the report will be done so via this channel.")
+        await ctx.send(embed=e)
+        return await ctx.send(
+            "Thank you for reporting the issue. Any updates to the report will be done so via this channel."
+        )
 
     @daemonreports.command()
     async def close(self, ctx, *, reason=None):
