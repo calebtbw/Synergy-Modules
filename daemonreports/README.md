@@ -17,6 +17,7 @@ These commands are for the Daemon Reports Settings for GGServers Discord. Note t
 - `!dr settings disable` - Disable reporting system.
 - `!dr settings dm` - Set whether or not to send a DM to the report author once a report is closed.
 - `!dr settings enable` - Enable reporting system.
+- `!dr settings list` - Lists the total open and archived reports.
 - `!dr settings purge` - Clean out channels under the archive category.
 - `!dr settings reaction` - Set the reaction to listen for on the report creation message.
 - `!dr settings reports` - Set a channel that logs when a report is opened or closed.
