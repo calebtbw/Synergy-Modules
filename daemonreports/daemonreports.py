@@ -685,7 +685,8 @@ class DaemonReports(commands.Cog):
                                          "**!dr settings creationmessage** - Set the message that is sent when users create a report.\n"
                                          "**!dr settings disable** - Disable reporting system.\n"
                                          "**!dr settings dm** - Set whether or not to send a DM to the report author once a report is closed.\n"
-                                         "**!dr settings enable** - Enable reporting system.", 
+                                         "**!dr settings enable** - Enable reporting system.\n"
+                                         "**!dr settings list** - Lists the total open and archived reports.", 
                                          color=discord.Color.blue())
 
         drs1.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
@@ -974,6 +975,43 @@ class DaemonReports(commands.Cog):
             await ctx.send("Users will now be DMed a message when their report is closed.")
         else:
             await ctx.send("Users will no longer be DMed a message when their report is closed.")
+
+    @settings.command(name="list")
+    async def report_channel_list(self, ctx):
+        """Lists the total Open and Archived reports.
+        And if more than 10, prompts Staff to check or clean channels."""
+        category = self.bot.get_channel((await self.config.guild(ctx.guild).category()))
+        archive = self.bot.get_channel((await self.config.guild(ctx.guild).archive())["category"])
+
+        total_category = []
+        total_archive = []
+
+        total_category = category.text_channels
+        total_archive = archive.text_channels
+        total_combined = total_category + total_archive
+
+        await ctx.send(
+            "```ini\n"
+            f"[Open Reports]:      {len(total_category)}\n"
+            f"[Archived Reports]:  {len(total_archive)}\n"
+            f"[Total Reports]:     {len(total_combined)}\n"
+            "```"
+        )
+
+        if len(total_category) >= 10:
+            await ctx.send(
+                "Staff Members are to go through the Open Reports, and double check if there are any equivalent Node IDs reported.\n"
+                "If so, run `!dr add <userID>` within either channels to add the user to it, and close the other with `!dr close`."
+            )
+        else:
+            pass
+
+        if len(total_archive) >= 10:
+            await ctx.send(
+                "Staff Members are to run `!dr settings purge` to clear out the Closed Reports."
+            )
+        else:
+            pass
 
     @settings.command(name="prune", aliases=["purge"])
     async def report_channel_prune(self, ctx, user: Optional[Union[int, discord.User]] = None):
