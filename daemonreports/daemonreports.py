@@ -285,7 +285,7 @@ class DaemonReports(commands.Cog):
                               description="**!dr add** - Adds a user to the current daemon report.\n"
                                           "**!dr close** - Close the created report.\n"
                                           "**!dr create** - For users to input their Node ID and Error.\n"
-                                          "**!dr list** - Lists reported daemon issues to normal users.\n"
+                                          "**!dr list** - Lists reported daemon issues to users.\n"
                                           "**!dr remove** - Remove a user from the current report.\n"
                                           "**!dr settings** - Manage settings for daemon reports.", 
                                           color=discord.Color.blue())
@@ -362,7 +362,7 @@ class DaemonReports(commands.Cog):
 
     @daemonreports.command(name="list")
     async def report_list(self, ctx):
-        "Lists reported daemon issues to normal users."
+        "Lists reported daemon issues to users."
         category = self.bot.get_channel((await self.config.guild(ctx.guild).category()))
 
         channels = category.text_channels
