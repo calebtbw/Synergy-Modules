@@ -301,7 +301,7 @@ class DaemonReports(commands.Cog):
         To be used in the created channel only."""
         channel = ctx.message.channel
         initial_msg = await ctx.send(
-            "You will be asked 2 questions for information regarding your daemon report. Please respond accordingly."
+            "You will be asked 2 questions regarding your daemon report. Please respond accordingly."
         )
 
         def check(message):
