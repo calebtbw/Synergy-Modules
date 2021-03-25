@@ -4,6 +4,7 @@ These commands are for the Daemon Reports System for GGServers Discord. Mostly f
 - `!dr add` - Adds a user to the current daemon report.
 - `!dr close` - Close the created report.
 - `!dr create` - For users to input their Node ID and Error.
+- `!dr list` - Lists reported daemon issues to normal users.
 - `!dr remove` - Remove a user from the current report.
 - `!dr settings` - Manage settings for daemon reports.
 
