@@ -13,7 +13,7 @@ from synergy.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTR
 from synergy.core.utils.mod import is_admin_or_superior
 from synergy.core.utils.predicates import ReactionPredicate
 
-__version__ = "1.0.2"
+__version__ = "1.0.4"
 __author__ = "Caleb T."
 
 
@@ -285,11 +285,13 @@ class DaemonReports(commands.Cog):
                               description="**!dr add** - Adds a user to the current daemon report.\n"
                                           "**!dr close** - Close the created report.\n"
                                           "**!dr create** - For users to input their Node ID and Error.\n"
+                                          "**!dr list** - Lists reported daemon issues to normal users.\n"
                                           "**!dr remove** - Remove a user from the current report.\n"
                                           "**!dr settings** - Manage settings for daemon reports.", 
                                           color=discord.Color.blue())
 
         embed.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
+        embed.set_footer(text="DaemonReports v1.0.4")
 
         await ctx.send(embed=embed)
 
@@ -297,6 +299,7 @@ class DaemonReports(commands.Cog):
     async def create(self, ctx):
         """For users to input their Node ID and Error.
         To be used in the created channel only."""
+        channel = ctx.message.channel
         initial_msg = await ctx.send(
             "You will be asked 2 questions for information regarding your daemon report. Please respond accordingly."
         )
@@ -352,9 +355,40 @@ class DaemonReports(commands.Cog):
             e.add_field(name=name, value=value, inline=inline)
 
         await ctx.send(embed=e)
+        await channel.edit(name=f"{node}")
         return await ctx.send(
             "Thank you for reporting the issue. Any updates to the report will be done so via this channel."
         )
+
+    @daemonreports.command(name="list")
+    async def report_list(self, ctx):
+        "Lists reported daemon issues to normal users."
+        category = self.bot.get_channel((await self.config.guild(ctx.guild).category()))
+
+        channels = category.text_channels
+
+        if len(channels) == 0:
+            await ctx.send(
+                "There are currently no reported daemon issues."
+            )
+            return
+
+        else:
+            daemon_reports = []
+            for channel in channels:
+                daemon_reports.append(f"{channel.name}")
+
+            dr = '\n'.join(daemon_reports)
+
+            e = discord.Embed(title="Daemon Reports",
+                            description="List of Reported Daemon Issues",
+                            color=discord.Color.blue(),
+                            timestamp=datetime.utcnow())
+
+            e.add_field(name="Current:", value=f"{dr}")
+            e.set_footer(text=f"There are currently {len(channels)} reported daemon issues.")
+
+            await ctx.send(embed=e)
 
     @daemonreports.command()
     async def close(self, ctx, *, reason=None):
