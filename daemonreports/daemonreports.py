@@ -880,18 +880,18 @@ class DaemonReports(commands.Cog):
     async def blacklist_check(self, ctx):
         """Users blacklisted from creating reports."""
         blacklist = await self.config.guild(ctx.guild).blacklist()
-            if not blacklist:
-                await ctx.send("No users have been blacklisted so far.")
-                return
-            e = discord.Embed(
-                title="The following users are blacklisted from creating reports.",
-                description="",
-                color=await ctx.embed_color(), 
-                timestamp=datetime.utcnow()
-            )
-            for u in blacklist:
-                e.description += f"<@{u}> "
-            await ctx.send(embed=e)
+        if not blacklist:
+            await ctx.send("No users have been blacklisted so far.")
+            return
+        e = discord.Embed(
+            title="The following users are blacklisted from creating reports.",
+            description="",
+            color=await ctx.embed_color(), 
+            timestamp=datetime.utcnow()
+        )
+        for u in blacklist:
+            e.description += f"<@{u}> "
+        await ctx.send(embed=e)
 
     @blacklist.command(name="add")
     async def blacklist_add(self, ctx, *, user: discord.Member = None):
