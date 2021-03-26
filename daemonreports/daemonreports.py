@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 import copy
 import time
+import re
 
 from datetime import datetime
 from typing import Optional, Union
@@ -13,7 +14,7 @@ from synergy.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTR
 from synergy.core.utils.mod import is_admin_or_superior
 from synergy.core.utils.predicates import ReactionPredicate
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 __author__ = "Caleb T."
 
 
@@ -291,7 +292,7 @@ class DaemonReports(commands.Cog):
                                           color=discord.Color.blue())
 
         embed.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
-        embed.set_footer(text="DaemonReports v1.0.4")
+        embed.set_footer(text="DaemonReports v1.0.5")
 
         await ctx.send(embed=embed)
 
@@ -308,7 +309,7 @@ class DaemonReports(commands.Cog):
             return message.author.id == ctx.message.author.id and message.content != ""
 
         q1 = await ctx.send(
-            "Please input your Node ID:"
+            "`Please input your Node ID:`"
         )
         try:
             r1 = await self.bot.wait_for(
@@ -324,7 +325,7 @@ class DaemonReports(commands.Cog):
             return
       
         q2 = await ctx.send(
-            "Please state the Error Message:"
+            "`Please state the Error Message:`"
         )
         try:
             r2 = await self.bot.wait_for(
@@ -337,7 +338,9 @@ class DaemonReports(commands.Cog):
                 "You took too long to provide the requested information.\n"
                 "Please try again by running `!dr create`."
             )
-            return       
+            return
+
+        nodeid = re.sub("[^0-9]", "", node)
     
         e = discord.Embed(
             title="Daemon Report Info",
@@ -355,7 +358,7 @@ class DaemonReports(commands.Cog):
             e.add_field(name=name, value=value, inline=inline)
 
         await ctx.send(embed=e)
-        await channel.edit(name=f"{node}")
+        await channel.edit(name=f"report-d{nodeid}")
         return await ctx.send(
             "Thank you for reporting the issue. Any updates to the report will be done so via this channel."
         )
@@ -501,7 +504,7 @@ class DaemonReports(commands.Cog):
                             )
                 await ctx.send(
                     f"Report for {author.display_name if author else author_id} has been closed.\n"
-                    "Channel will be moved to archive in 10 seconds."
+                    "Channel will be archived in 10 seconds."
                 )
 
                 await asyncio.sleep(10)
@@ -603,7 +606,7 @@ class DaemonReports(commands.Cog):
             else:
                 await ctx.send(
                     "Failed to determine report.\n"
-                    "Please run command in the corresponding report channel."
+                    "Please run the command in the corresponding report channel."
                 )
             return
 
@@ -674,7 +677,7 @@ class DaemonReports(commands.Cog):
             else:
                 await ctx.send(
                     "Failed to determine report. "
-                    "Please run command in the corresponding report channel."
+                    "Please run the command in the corresponding report channel."
                 )
             return
 
@@ -720,7 +723,7 @@ class DaemonReports(commands.Cog):
                                          "**!dr settings disable** - Disable reporting system.\n"
                                          "**!dr settings dm** - Set whether or not to send a DM to the report author once a report is closed.\n"
                                          "**!dr settings enable** - Enable reporting system.\n"
-                                         "**!dr settings list** - Lists the total open and archived reports.", 
+                                         "**!dr settings list** - Lists the total open and archived reports.",
                                          color=discord.Color.blue())
 
         drs1.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
@@ -761,7 +764,6 @@ class DaemonReports(commands.Cog):
             f"[User-Closable]:     {guild_settings['usercanclose']}\n"
             f"[User-Modifiable]:   {guild_settings['usercanmodify']}\n"
             f"[Report Category]:   {report_category}\n"
-            f"[Report Channel]:    {report_channel}\n"
             f"[Report Close DM]:   {guild_settings['dm']}\n"
             f"[Archive Category]:  {archive_category}\n"
             f"[Archive Enabled]:   {guild_settings['archive']['enabled']}\n"
@@ -868,24 +870,16 @@ class DaemonReports(commands.Cog):
         else:
             await ctx.send("Only Staff can now add/remove users to reports.")
 
-    @settings.command()
-    async def blacklist(self, ctx, *, user: discord.Member = None):
+    @settings.group()
+    async def blacklist(self, ctx):
         """Add or remove a user to be prevented from creating daemon reports.
         Useful for users who are creating reports for no reason."""
-        if user:
-            async with self.config.guild(ctx.guild).blacklist() as blacklist:
-                if user.id in blacklist:
-                    blacklist.remove(user.id)
-                    await ctx.send(
-                        f"{user.display_name} has been removed from the Daemon Reports blacklist."
-                    )
-                else:
-                    blacklist.append(user.id)
-                    await ctx.send(
-                        f"{user.display_name} has been added to the Daemon Reports blacklist."
-                    )
-        else:
-            blacklist = await self.config.guild(ctx.guild).blacklist()
+        pass
+
+    @blacklist.command(name="check")
+    async def blacklist_check(self, ctx):
+        """Users blacklisted from creating reports."""
+        blacklist = await self.config.guild(ctx.guild).blacklist()
             if not blacklist:
                 await ctx.send("No users have been blacklisted so far.")
                 return
@@ -898,6 +892,46 @@ class DaemonReports(commands.Cog):
             for u in blacklist:
                 e.description += f"<@{u}> "
             await ctx.send(embed=e)
+
+    @blacklist.command(name="add")
+    async def blacklist_add(self, ctx, *, user: discord.Member = None):
+        """Add a user to the DR blacklist."""
+        if user:
+            async with self.config.guild(ctx.guild).blacklist() as blacklist:
+                if user.id in blacklist:
+                    await ctx.send(
+                        f"{user.display_name} is already on the Daemon Reports blacklist."
+                    )
+                    return
+                else:
+                    blacklist.append(user.id)
+                    await ctx.send(
+                        f"{user.display_name} has been added to the Daemon Reports blacklist."
+                    )
+        else:
+            await ctx.send(
+                "Please run `!dr blacklist add <userID>` to add a user to the Daemon Reports blacklist."
+            )
+
+    @blacklist.command(name="remove")
+    async def blacklist_remove(self, ctx, *, user: discord.Member = None):
+        """Remove a user from the DR blacklist."""
+        if user:
+            async with self.config.guild(ctx.guild).blacklist() as blacklist:
+                if user.id in blacklist:
+                    blacklist.remove(user.id)
+                    await ctx.send(
+                        f"{user.display_name} has been removed from the Daemon Reports blacklist."
+                    )
+                else:
+                    await ctx.send(
+                        f"{user.display_name} is not on the Daemon Reports blacklist."
+                    )
+                    return
+        else:
+            await ctx.send(
+                "Please run `!dr blacklist remove <userID>` to remove a user from the Daemon Reports blacklist."
+            )      
 
     @settings.command()
     async def roles(self, ctx, *, role: discord.Role = None):
@@ -948,7 +982,7 @@ class DaemonReports(commands.Cog):
             return
 
         await self.config.guild(ctx.guild).category.set(category.id)
-        await ctx.send(f"Report channels will now be created in the {category.name} category")
+        await ctx.send(f"Report channels will now be created in the {category.name} category.")
 
     @settings.group()
     async def archive(self, ctx):
