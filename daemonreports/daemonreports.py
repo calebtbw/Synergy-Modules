@@ -14,7 +14,7 @@ from synergy.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTR
 from synergy.core.utils.mod import is_admin_or_superior
 from synergy.core.utils.predicates import ReactionPredicate
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 __author__ = "Caleb T."
 
 
@@ -292,7 +292,7 @@ class DaemonReports(commands.Cog):
                                           color=discord.Color.blue())
 
         embed.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
-        embed.set_footer(text="DaemonReports v1.0.5")
+        embed.set_footer(text="DaemonReports v1.0.6")
 
         await ctx.send(embed=embed)
 
@@ -358,7 +358,7 @@ class DaemonReports(commands.Cog):
             e.add_field(name=name, value=value, inline=inline)
 
         await ctx.send(embed=e)
-        await channel.edit(name=f"report-d{nodeid}")
+        await channel.edit(name=f"report-{nodeid}")
         return await ctx.send(
             "Thank you for reporting the issue. Any updates to the report will be done so via this channel."
         )
@@ -1288,3 +1288,108 @@ class DaemonReports(commands.Cog):
         else:
             await message.delete()
             return await ctx.send("Daemon Reports system will not be disabled.")
+  
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        """Closes the report when a user creates one and leaves the guild."""
+        if member.id == self.bot.user.id:
+            return
+        
+        guild = member.guild
+        guildcfg = self.config.guild(guild) 
+        guild_settings = await guildcfg.all()
+
+        member_id = member.id
+
+        if str(member_id) not in guild_settings["created"]:
+            return
+        
+        channel = self.bot.get_channel(guild_settings["created"][str(member_id)]["channel"])
+        archive = self.bot.get_channel(guild_settings["archive"]["category"])
+        reason = "User left the guild after creating a report."
+
+        async with guildcfg.created() as created:
+            del created[str(member_id)]
+        
+        if guild_settings["report"] != 0:
+                reporting_channel = self.bot.get_channel(guild_settings["report"])
+                if reporting_channel:
+                    if await self.embed_requested(reporting_channel):
+                        embed = discord.Embed(
+                            title="Report Closed",
+                            description=(
+                                f"Report created by {member.mention if member else member_id} "
+                                f"has been closed."
+                            ),
+                            color=discord.Color.dark_red(), 
+                            timestamp=datetime.utcnow()
+                        )
+                        embed.add_field(name="Reason", value=reason)
+                        await reporting_channel.send(embed=embed)
+                    else:
+                        message = (
+                            f"Report created by {str(member) if member else member_id} "
+                            f"has been closed."
+                        )
+                        message += f"\n**Reason**: {reason}"
+                        await reporting_channel.send(message)
+
+        if guild_settings["dm"] and member:
+                embed = discord.Embed(
+                    title="Report Closed",
+                    description=("Your report has been closed."),
+                    color=discord.Color.dark_red(), 
+                    timestamp=datetime.utcnow()
+                )
+                embed.add_field(name="Reason", value=reason)               
+                with contextlib.suppress(discord.HTTPException):
+                    await member.send(embed=embed)
+
+        if guild_settings["archive"]["enabled"] and channel and archive:
+                await channel.send(
+                    f"Report for {member.display_name if member else member_id} has been closed.\n"
+                    "Channel will be archived in 10 seconds."
+                )
+
+                await asyncio.sleep(10)
+
+                try:
+                    admin_roles = [
+                        guild.get_role(role_id)
+                        for role_id in (await self.bot._config.guild(guild).admin_role())
+                        if guild.get_role(role_id)
+                    ]
+                    support_roles = [
+                        guild.get_role(role_id)
+                        for role_id in (await guildcfg.supportroles())
+                        if guild.get_role(role_id)
+                    ]
+
+                    all_roles = admin_roles + support_roles
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                        guild.me: discord.PermissionOverwrite(
+                            read_messages=True,
+                            send_messages=True,
+                            manage_channels=True,
+                            manage_permissions=True,
+                        ),
+                    }
+                    for role in all_roles:
+                        overwrites[role] = discord.PermissionOverwrite(
+                            read_messages=True, send_messages=True
+                        )
+                    await channel.edit(category=archive, overwrites=overwrites)
+                except discord.HTTPException as e:
+                    await channel.send(f"Failed to move to archive: {str(e)}")
+        
+        else:
+            if channel:
+                try:
+                    await channel.delete()
+                except discord.HTTPException:
+                        with contextlib.suppress(discord.HTTPException):
+                            await channel.send(
+                                "Failed to delete channel. Please ensure I have `Manage Channels` "
+                                "permission in the category."
+                            )
