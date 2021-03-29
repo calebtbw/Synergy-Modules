@@ -287,7 +287,7 @@ class DaemonReports(commands.Cog):
 
             channel = created_channel
             archive = self.bot.get_channel(guild_settings["archive"]["category"])
-            reason = "User created a report and did not provide any information."
+            reason = "User created a report but did not provide any further information."
 
             user_id = user.id
 
