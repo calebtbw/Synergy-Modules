@@ -14,7 +14,7 @@ from synergy.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTR
 from synergy.core.utils.mod import is_admin_or_superior
 from synergy.core.utils.predicates import ReactionPredicate
 
-__version__ = "1.0.7"
+__version__ = "1.0.8"
 __author__ = "Caleb T."
 
 
@@ -396,7 +396,7 @@ class DaemonReports(commands.Cog):
                                           color=discord.Color.blue())
 
         embed.set_author(name="GGServers", icon_url=ctx.guild.icon_url)
-        embed.set_footer(text="DaemonReports v1.0.7")
+        embed.set_footer(text="DaemonReports v1.0.8")
 
         await ctx.send(embed=embed)
 
@@ -404,68 +404,79 @@ class DaemonReports(commands.Cog):
     async def create(self, ctx):
         """For users to input their Node ID and Error.
         To be used in the created channel only."""
-        channel = ctx.message.channel
-        initial_msg = await ctx.send(
-            "You will be asked 2 questions regarding your daemon report. Please respond accordingly."
+        guildcfg = self.config.guild(ctx.guild)
+        guild_settings = await guildcfg.all()
+        is_admin = await is_admin_or_superior(self.bot, ctx.author) or any(
+            [ur.id in guild_settings["supportroles"] for ur in ctx.author.roles]
         )
-
-        def check(message):
-            return message.author.id == ctx.message.author.id and message.content != ""
-
-        q1 = await ctx.send(
-            "`Please input your Node ID:`"
-        )
-        try:
-            r1 = await self.bot.wait_for(
-                "message", timeout=60, check=check
-            )
-            node = r1.content
-
-        except asyncio.TimeoutError:
+        if is_admin:
             await ctx.send(
-                "You took too long to provide the requested information.\n"
-                "Please try again by running `!dr create`."
+                "`!dr create` is to be ran by the user who created this report."
             )
             return
-      
-        q2 = await ctx.send(
-            "`Please state the Error Message:`"
-        )
-        try:
-            r2 = await self.bot.wait_for(
-                "message", timeout=60, check=check
+        else:
+            channel = ctx.message.channel
+            initial_msg = await ctx.send(
+                "You will be asked 2 questions regarding your daemon report. Please respond accordingly."
             )
-            error = r2.content
 
-        except asyncio.TimeoutError:
-            await ctx.send(
-                "You took too long to provide the requested information.\n"
-                "Please try again by running `!dr create`."
+            def check(message):
+                return message.author.id == ctx.message.author.id and message.content != ""
+
+            q1 = await ctx.send(
+                "`Please input your Node ID:`"
             )
-            return
+            try:
+                r1 = await self.bot.wait_for(
+                    "message", timeout=60, check=check
+                )
+                node = r1.content
 
-        nodeid = re.sub("[^0-9]", "", node)
-    
-        e = discord.Embed(
-            title="Daemon Report Info",
-            description="For Staff to note the reported Node ID and Error Message.",
-            color=discord.Color.blue(),
-            timestamp=datetime.utcnow()
-        )
+            except asyncio.TimeoutError:
+                await ctx.send(
+                    f"{ctx.author.mention} took too long to provide the requested information.\n"
+                    "Please try again by running `!dr create`."
+                )
+                return
+        
+            q2 = await ctx.send(
+                "`Please state the Error Message:`"
+            )
+            try:
+                r2 = await self.bot.wait_for(
+                    "message", timeout=60, check=check
+                )
+                error = r2.content
 
-        fields = [
-            ("Node ID:", f"{node}", False),
-            ("Error:", f"{error}", False)
-        ]
+            except asyncio.TimeoutError:
+                await ctx.send(
+                    f"{ctx.author.mention} took too long to provide the requested information.\n"
+                    "Please try again by running `!dr create`."
+                )
+                return
 
-        for name, value, inline in fields:
-            e.add_field(name=name, value=value, inline=inline)
+            nodeid = re.sub("[^0-9]", "", node)
+        
+            e = discord.Embed(
+                title="Daemon Report Info",
+                description="For Staff to note the reported Node ID and Error Message.",
+                color=discord.Color.blue(),
+                timestamp=datetime.utcnow()
+            )
 
-        await ctx.send(embed=e)
-        await channel.edit(name=f"report-{nodeid}")
-        return await ctx.send(
-            "Thank you for reporting the issue. Any updates to the report will be done so via this channel."
-        )
+            fields = [
+                ("Node ID:", f"{node}", False),
+                ("Error:", f"{error}", False)
+            ]
+
+            for name, value, inline in fields:
+                e.add_field(name=name, value=value, inline=inline)
+
+            await ctx.send(embed=e)
+            await channel.edit(name=f"report-{nodeid}")
+            return await ctx.send(
+                "Thank you for reporting the issue. Any updates to the report will be done so via this channel."
+            )
 
     @daemonreports.command(name="list")
     async def report_list(self, ctx):
@@ -590,7 +601,7 @@ class DaemonReports(commands.Cog):
             if guild_settings["dm"] and author:
                 embed = discord.Embed(
                     title="Report Closed",
-                    description=(f"Your report has been closed by {ctx.author.mention}."),
+                    description=(f"Your report has been closed by {author.mention if author else author_id}."),
                     color=discord.Color.dark_red(), 
                     timestamp=datetime.utcnow()
                 )
@@ -669,6 +680,29 @@ class DaemonReports(commands.Cog):
                                 "Failed to delete channel. Please ensure I have `Manage Channels` "
                                 "permission in the category."
                             )
+            
+            # Automatically purges archived reports if len > 5
+            archive_channels = archive.text_channels
+           
+            if len(archive_channels) <= 5:
+                pass
+            else:
+                await reporting_channel.send(
+                    f"Automatically purging {len(archive_channels)} Text Channels."
+                )
+                for channel in archive_channels:
+                    try:
+                        await channel.delete()
+                    except discord.Forbidden:
+                        await reporting_channel.send(
+                            "I do not have permission to delete those text channels.\n"
+                            'Make sure I have "Manage Channels" permission.'
+                        )
+                        return
+                    except discord.HTTPException:
+                        continue
+               
+                await reporting_channel.send("Channels successfully purged.")
         else:
             await ctx.send("Report closure cancelled.")
             return await message.delete()
@@ -676,7 +710,8 @@ class DaemonReports(commands.Cog):
     @daemonreports.command(name="add")
     async def report_add(self, ctx, user: discord.Member):
         """Adds a user to the current daemon report."""
-        guild_settings = await self.config.guild(ctx.guild).all()
+        guildcfg = self.config.guild(ctx.guild)
+        guild_settings = await guildcfg.all()
         is_admin = await is_admin_or_superior(self.bot, ctx.author) or any(
             [ur.id in guild_settings["supportroles"] for ur in ctx.author.roles]
         )
@@ -726,12 +761,12 @@ class DaemonReports(commands.Cog):
             await ctx.send("Members of Staff cannot be added to reports.")
             return
 
-        channel = self.bot.get_channel(guild_settings["created"][str(author_id)]["channel"])
-        if not channel:
+        target_channel = self.bot.get_channel(guild_settings["created"][str(author_id)]["channel"])
+        if not target_channel:
             await ctx.send("The report channel has been deleted.")
 
         try:
-            await channel.set_permissions(user, send_messages=True, read_messages=True)
+            await target_channel.set_permissions(user, send_messages=True, read_messages=True)
         except discord.Forbidden:
             await ctx.send(
                 "The manage permissions channel permission for me has been removed. "
@@ -739,10 +774,105 @@ class DaemonReports(commands.Cog):
             )
             return
 
-        async with self.config.guild(ctx.guild).created() as created:
+        async with guildcfg.created() as created:
             created[str(author_id)]["added"].append(user.id)
 
         await ctx.send(f"{user.mention} has been added to the report.")
+
+        user_id = user.id
+
+        if str(user_id) not in guild_settings["created"]:
+            return
+        
+        current_channel = self.bot.get_channel(guild_settings["created"][str(user_id)]["channel"])
+        archive = self.bot.get_channel(guild_settings["archive"]["category"])
+        reason = "User has been added to another report with the same Node ID."
+
+        async with guildcfg.created() as created:
+            del created[str(user_id)]
+        
+        if guild_settings["report"] != 0:
+                reporting_channel = self.bot.get_channel(guild_settings["report"])
+                if reporting_channel:
+                    if await self.embed_requested(reporting_channel):
+                        embed = discord.Embed(
+                            title="Report Closed",
+                            description=(
+                                f"Report created by {user.mention if user else user_id} "
+                                f"has been closed."
+                            ),
+                            color=discord.Color.dark_red(), 
+                            timestamp=datetime.utcnow()
+                        )
+                        embed.add_field(name="Reason", value=reason)
+                        await reporting_channel.send(embed=embed)
+                    else:
+                        message = (
+                            f"Report created by {str(user) if user else user_id} "
+                            f"has been closed."
+                        )
+                        message += f"\n**Reason**: {reason}"
+                        await reporting_channel.send(message)
+
+        if guild_settings["dm"] and user:
+                embed = discord.Embed(
+                    title="Report Closed",
+                    description=("Your report has been closed."),
+                    color=discord.Color.dark_red(), 
+                    timestamp=datetime.utcnow()
+                )
+                embed.add_field(name="Reason", value=reason)               
+                with contextlib.suppress(discord.HTTPException):
+                    await user.send(embed=embed)
+        
+        if guild_settings["archive"]["enabled"] and current_channel and archive:
+                await current_channel.send(
+                    f"Report for {user.display_name if user else user_id} has been closed.\n"
+                    "Channel will be archived in 10 seconds."
+                )
+
+                await asyncio.sleep(10)
+
+                try:
+                    admin_roles = [
+                        ctx.guild.get_role(role_id)
+                        for role_id in (await self.bot._config.guild(ctx.guild).admin_role())
+                        if ctx.guild.get_role(role_id)
+                    ]
+                    support_roles = [
+                        ctx.guild.get_role(role_id)
+                        for role_id in (await guildcfg.supportroles())
+                        if ctx.guild.get_role(role_id)
+                    ]
+
+                    all_roles = admin_roles + support_roles
+                    overwrites = {
+                        ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                        ctx.guild.me: discord.PermissionOverwrite(
+                            read_messages=True,
+                            send_messages=True,
+                            manage_channels=True,
+                            manage_permissions=True,
+                        ),
+                    }
+                    for role in all_roles:
+                        overwrites[role] = discord.PermissionOverwrite(
+                            read_messages=True, send_messages=True
+                        )
+                    await current_channel.edit(category=archive, overwrites=overwrites)
+                except discord.HTTPException as e:
+                    await current_channel.send(f"Failed to move to archive: {str(e)}")
+
+        else:
+            if current_channel:
+                try:
+                    await current_channel.delete()
+                except discord.HTTPException:
+                        with contextlib.suppress(discord.HTTPException):
+                            await current_channel.send(
+                                "Failed to delete channel. Please ensure I have `Manage Channels` "
+                                "permission in the category."
+                            )
 
     @daemonreports.command(name="remove")
     async def report_remove(self, ctx, user: discord.Member):
