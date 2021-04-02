@@ -16,7 +16,7 @@ from synergy.core.utils.predicates import ReactionPredicate
 
 
 #
-#          Daemon Reports v2
+#          Daemon Reports V2
 #
 #           Made by Caleb T.
 #
@@ -88,7 +88,7 @@ class DaemonReports(commands.Cog):
             return guild_setting
 
         return await self.bot._config.embeds()
-    
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """
@@ -412,7 +412,8 @@ class DaemonReports(commands.Cog):
                         continue
                 
                 await reporting_channel.send("Successfully purged archived reports.")
-    
+
+    # Start DR Commands
     @checks.bot_has_permissions(add_reactions=True)
     @commands.guild_only()
     @commands.group(aliases=["dr"])
@@ -527,7 +528,7 @@ class DaemonReports(commands.Cog):
                 "Thank you for reporting the issue. "
                 "Any updates to the report will be done so through this channel."
             )
-    
+
     @daemonreports.command(name="list")
     async def report_list(self, ctx):
         """
@@ -948,6 +949,29 @@ class DaemonReports(commands.Cog):
                                 "Failed to delete channel. Please ensure I have the `Manage Channels` "
                                 "permission in the category."
                             )
+        
+        # Automatically purges archived reports if len > 5
+            archive_channels = archive.text_channels
+
+            if len(archive_channels) <= 5:
+                pass
+            else:
+                await reporting_channel.send(
+                    f"Automatically purging {len(archive_channels)} archived reports."
+                )
+                for channel in archive_channels:
+                    try:
+                        await channel.delete()
+                    except discord.Forbidden:
+                        await reporting_channel.send(
+                            "I do not have permission to delete those text channels.\n"
+                            "Make sure I have the `Manage Channels` permission."
+                        )
+                        return
+                    except discord.HTTPException:
+                        continue
+                
+                await reporting_channel.send("Successfully purged archived reports.")
     
     @daemonreports.command(name="remove")
     async def report_remove(self, ctx, user: discord.Member):
@@ -1024,8 +1048,9 @@ class DaemonReports(commands.Cog):
             created[str(author_id)]["added"].remove(user.id)
 
         await ctx.send(f"{user.mention} has been removed from {channel.name}.")
-    
+    # End DR Commands
 
+    # Start DR Settings Commands
     @checks.admin_or_permissions(manage_guild=True)
     @daemonreports.group(invoke_without_command=True)
     async def settings(self, ctx):
@@ -1610,6 +1635,7 @@ class DaemonReports(commands.Cog):
         else:
             await message.delete()
             return await ctx.send("Daemon Reports system will not be disabled.")
+    # End DR Settings Commands
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
