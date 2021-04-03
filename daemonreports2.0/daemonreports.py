@@ -864,80 +864,80 @@ class DaemonReports(commands.Cog):
             del created[str(user_id)]
         
         if guild_settings["report"] != 0:
-                reporting_channel = self.bot.get_channel(guild_settings["report"])
-                if reporting_channel:
-                    if await self.embed_requested(reporting_channel):
-                        embed = discord.Embed(
-                            title="Report Closed",
-                            description=(
-                                f"Report created by {user.mention if user else user_id} "
-                                f"has been closed by {self.bot.user.name}."
-                            ),
-                            color=discord.Color.dark_green(), 
-                            timestamp=datetime.utcnow()
-                        )
-                        embed.set_thumbnail(url=user.avatar_url)
-                        embed.add_field(name="Reason", value=reason)
-                        await reporting_channel.send(embed=embed)
-                    else:
-                        message = (
-                            f"Report created by {str(user) if user else user_id} "
-                            f"has been closed."
-                        )
-                        message += f"\n**Reason**: {reason}"
-                        await reporting_channel.send(message)
+            reporting_channel = self.bot.get_channel(guild_settings["report"])
+            if reporting_channel:
+                if await self.embed_requested(reporting_channel):
+                    embed = discord.Embed(
+                        title="Report Closed",
+                        description=(
+                            f"Report created by {user.mention if user else user_id} "
+                            f"has been closed by {self.bot.user.name}."
+                        ),
+                        color=discord.Color.dark_green(), 
+                        timestamp=datetime.utcnow()
+                    )
+                    embed.set_thumbnail(url=user.avatar_url)
+                    embed.add_field(name="Reason", value=reason)
+                    await reporting_channel.send(embed=embed)
+                else:
+                    message = (
+                        f"Report created by {str(user) if user else user_id} "
+                        f"has been closed."
+                    )
+                    message += f"\n**Reason**: {reason}"
+                    await reporting_channel.send(message)
         
         if guild_settings["dm"] and user:
-                embed = discord.Embed(
-                    title="Report Closed",
-                    description=(
-                        "Your daemon report has been closed "
-                        f"by {self.bot.user.name}."
-                    ),
-                    color=discord.Color.dark_green(), 
-                    timestamp=datetime.utcnow()
-                )
-                embed.add_field(name="Reason", value=reason)               
-                with contextlib.suppress(discord.HTTPException):
-                    await user.send(embed=embed)
+            embed = discord.Embed(
+                title="Report Closed",
+                description=(
+                    "Your daemon report has been closed "
+                    f"by {self.bot.user.name}."
+                ),
+                color=discord.Color.dark_green(), 
+                timestamp=datetime.utcnow()
+            )
+            embed.add_field(name="Reason", value=reason)               
+            with contextlib.suppress(discord.HTTPException):
+                await user.send(embed=embed)
 
         if guild_settings["archive"]["enabled"] and current_channel and archive:
-                await current_channel.send(
-                    f"Report for {user.display_name if user else user_id} has been closed.\n"
-                    "Channel will be archived in 10 seconds."
-                )
+            await current_channel.send(
+                f"Report for {user.display_name if user else user_id} has been closed.\n"
+                "Channel will be archived in 10 seconds."
+            )
 
-                await asyncio.sleep(10)
+            await asyncio.sleep(10)
 
-                try:
-                    admin_roles = [
-                        ctx.guild.get_role(role_id)
-                        for role_id in (await self.bot._config.guild(ctx.guild).admin_role())
-                        if ctx.guild.get_role(role_id)
-                    ]
-                    support_roles = [
-                        ctx.guild.get_role(role_id)
-                        for role_id in (await guildcfg.supportroles())
-                        if ctx.guild.get_role(role_id)
-                    ]
+            try:
+                admin_roles = [
+                    ctx.guild.get_role(role_id)
+                    for role_id in (await self.bot._config.guild(ctx.guild).admin_role())
+                    if ctx.guild.get_role(role_id)
+                ]
+                support_roles = [
+                    ctx.guild.get_role(role_id)
+                    for role_id in (await guildcfg.supportroles())
+                    if ctx.guild.get_role(role_id)
+                ]
 
-                    all_roles = admin_roles + support_roles
-                    overwrites = {
-                        ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                        ctx.guild.me: discord.PermissionOverwrite(
-                            read_messages=True,
-                            send_messages=True,
-                            manage_channels=True,
-                            manage_permissions=True,
-                        ),
-                    }
-                    for role in all_roles:
-                        overwrites[role] = discord.PermissionOverwrite(
-                            read_messages=True, send_messages=True
-                        )
-                    await current_channel.edit(category=archive, overwrites=overwrites)
-                except discord.HTTPException as e:
-                    await current_channel.send(f"Failed to move to archive: {str(e)}")
+                all_roles = admin_roles + support_roles
+                overwrites = {
+                    ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    ctx.guild.me: discord.PermissionOverwrite(
+                        read_messages=True,
+                        send_messages=True,
+                        manage_channels=True,
+                        manage_permissions=True,
+                    ),
+                }
+                for role in all_roles:
+                    overwrites[role] = discord.PermissionOverwrite(
+                        read_messages=True, send_messages=True
+                    )
+                await current_channel.edit(category=archive, overwrites=overwrites)
+            except discord.HTTPException as e:
+                await current_channel.send(f"Failed to move to archive: {str(e)}")
 
         else:
             if current_channel:
@@ -951,27 +951,27 @@ class DaemonReports(commands.Cog):
                             )
         
         # Automatically purges archived reports if len > 5
-            archive_channels = archive.text_channels
+        archive_channels = archive.text_channels
 
-            if len(archive_channels) <= 5:
-                pass
-            else:
-                await reporting_channel.send(
-                    f"Automatically purging {len(archive_channels)} archived reports."
-                )
-                for channel in archive_channels:
-                    try:
-                        await channel.delete()
-                    except discord.Forbidden:
-                        await reporting_channel.send(
-                            "I do not have permission to delete those text channels.\n"
-                            "Make sure I have the `Manage Channels` permission."
-                        )
-                        return
-                    except discord.HTTPException:
-                        continue
-                
-                await reporting_channel.send("Successfully purged archived reports.")
+        if len(archive_channels) <= 5:
+            pass
+        else:
+            await reporting_channel.send(
+                f"Automatically purging {len(archive_channels)} archived reports."
+            )
+            for channel in archive_channels:
+                try:
+                    await channel.delete()
+                except discord.Forbidden:
+                    await reporting_channel.send(
+                        "I do not have permission to delete those text channels.\n"
+                        "Make sure I have the `Manage Channels` permission."
+                    )
+                    return
+                except discord.HTTPException:
+                    continue
+            
+            await reporting_channel.send("Successfully purged archived reports.")
     
     @daemonreports.command(name="remove")
     async def report_remove(self, ctx, user: discord.Member):
@@ -1662,79 +1662,79 @@ class DaemonReports(commands.Cog):
             del created[str(member_id)]
         
         if guild_settings["report"] != 0:
-                reporting_channel = self.bot.get_channel(guild_settings["report"])
-                if reporting_channel:
-                    if await self.embed_requested(reporting_channel):
-                        embed = discord.Embed(
-                            title="Report Closed",
-                            description=(
-                                f"Report created by {member.mention if member else member_id} "
-                                f"has been closed by {self.bot.user.name}."
-                            ),
-                            color=discord.Color.dark_green(), 
-                            timestamp=datetime.utcnow()
-                        )
-                        embed.add_field(name="Reason", value=reason)
-                        await reporting_channel.send(embed=embed)
-                    else:
-                        message = (
-                            f"Report created by {str(member) if member else member_id} "
+            reporting_channel = self.bot.get_channel(guild_settings["report"])
+            if reporting_channel:
+                if await self.embed_requested(reporting_channel):
+                    embed = discord.Embed(
+                        title="Report Closed",
+                        description=(
+                            f"Report created by {member.mention if member else member_id} "
                             f"has been closed by {self.bot.user.name}."
-                        )
-                        message += f"\n**Reason**: {reason}"
-                        await reporting_channel.send(message)
+                        ),
+                        color=discord.Color.dark_green(), 
+                        timestamp=datetime.utcnow()
+                    )
+                    embed.add_field(name="Reason", value=reason)
+                    await reporting_channel.send(embed=embed)
+                else:
+                    message = (
+                        f"Report created by {str(member) if member else member_id} "
+                        f"has been closed by {self.bot.user.name}."
+                    )
+                    message += f"\n**Reason**: {reason}"
+                    await reporting_channel.send(message)
 
         if guild_settings["dm"] and member:
-                embed = discord.Embed(
-                    title="Report Closed",
-                    description=(
-                        "Your daemon report has been closed "
-                        f"by {self.bot.user.name}."
-                    ),
-                    color=discord.Color.dark_green(), 
-                    timestamp=datetime.utcnow()
-                )
-                embed.add_field(name="Reason", value=reason)               
-                with contextlib.suppress(discord.HTTPException):
-                    await member.send(embed=embed)
+            embed = discord.Embed(
+                title="Report Closed",
+                description=(
+                    "Your daemon report has been closed "
+                    f"by {self.bot.user.name}."
+                ),
+                color=discord.Color.dark_green(), 
+                timestamp=datetime.utcnow()
+            )
+            embed.add_field(name="Reason", value=reason)               
+            with contextlib.suppress(discord.HTTPException):
+                await member.send(embed=embed)
 
         if guild_settings["archive"]["enabled"] and channel and archive:
-                await channel.send(
-                    f"Report for {member.display_name if member else member_id} has been closed.\n"
-                    "Channel will be archived in 10 seconds."
-                )
+            await channel.send(
+                f"Report for {member.display_name if member else member_id} has been closed.\n"
+                "Channel will be archived in 10 seconds."
+            )
 
-                await asyncio.sleep(10)
+            await asyncio.sleep(10)
 
-                try:
-                    admin_roles = [
-                        guild.get_role(role_id)
-                        for role_id in (await self.bot._config.guild(guild).admin_role())
-                        if guild.get_role(role_id)
-                    ]
-                    support_roles = [
-                        guild.get_role(role_id)
-                        for role_id in (await guildcfg.supportroles())
-                        if guild.get_role(role_id)
-                    ]
+            try:
+                admin_roles = [
+                    guild.get_role(role_id)
+                    for role_id in (await self.bot._config.guild(guild).admin_role())
+                    if guild.get_role(role_id)
+                ]
+                support_roles = [
+                    guild.get_role(role_id)
+                    for role_id in (await guildcfg.supportroles())
+                    if guild.get_role(role_id)
+                ]
 
-                    all_roles = admin_roles + support_roles
-                    overwrites = {
-                        guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                        guild.me: discord.PermissionOverwrite(
-                            read_messages=True,
-                            send_messages=True,
-                            manage_channels=True,
-                            manage_permissions=True,
-                        ),
-                    }
-                    for role in all_roles:
-                        overwrites[role] = discord.PermissionOverwrite(
-                            read_messages=True, send_messages=True
-                        )
-                    await channel.edit(category=archive, overwrites=overwrites)
-                except discord.HTTPException as e:
-                    await channel.send(f"Failed to move to archive: {str(e)}")
+                all_roles = admin_roles + support_roles
+                overwrites = {
+                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    guild.me: discord.PermissionOverwrite(
+                        read_messages=True,
+                        send_messages=True,
+                        manage_channels=True,
+                        manage_permissions=True,
+                    ),
+                }
+                for role in all_roles:
+                    overwrites[role] = discord.PermissionOverwrite(
+                        read_messages=True, send_messages=True
+                    )
+                await channel.edit(category=archive, overwrites=overwrites)
+            except discord.HTTPException as e:
+                await channel.send(f"Failed to move to archive: {str(e)}")
         
         else:
             if channel:
