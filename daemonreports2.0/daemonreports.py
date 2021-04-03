@@ -16,15 +16,15 @@ from synergy.core.utils.predicates import ReactionPredicate
 
 
 #
-#          Daemon Reports System
+#        Daemon Reports V2
 #
-#             Made by Caleb T.
+#         Made by Caleb T.
 #
 
 
 class DaemonReports(commands.Cog):
     """
-    Reaction Report System
+    Daemon Report System
     """
     def __init__(self, bot: Synergy):
         self.bot: Synergy = bot
@@ -238,7 +238,7 @@ class DaemonReports(commands.Cog):
                             f"Report created by {user.mention} has been opened.\n"
                             f"Click [here]({sent.jump_url}) to jump to the start of the report."
                         ),
-                        color=discord.Color.dark_red(), 
+                        color=discord.Color.dark_green(), 
                         timestamp=datetime.utcnow()
                     )
                     embed.set_thumbnail(url=user.avatar_url)
