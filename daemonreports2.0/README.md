@@ -8,8 +8,8 @@ These commands are for the Daemon Reports System for GGServers Discord.
 - `!dr remove` - Removes a user from a daemon report.
 - `!dr settings` - Manage settings for daemon reports.
 
-## DR System Settings
-These commands are for the Daemon Reports Settings for GGServers Discord. Note that some of these have subcommands present. 
+## DR Settings
+These commands are for the Daemon Reports Settings for GGServers Discord. Note: Certain commands have subcommands.
 
 - `!dr settings archive` - Customize settings for archiving daemon reports.
 - `!dr settings blacklist` - Add/Remove a user from the daemon reports blacklist.
