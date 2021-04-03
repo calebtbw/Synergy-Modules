@@ -16,9 +16,9 @@ from synergy.core.utils.predicates import ReactionPredicate
 
 
 #
-#          Daemon Reports V2
+#          Daemon Reports System
 #
-#           Made by Caleb T.
+#             Made by Caleb T.
 #
 
 
@@ -92,7 +92,7 @@ class DaemonReports(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """
-        Basis of the entire daemon reports system.
+        Base of the entire daemon reports system.
         """
         if payload.user_id == self.bot.user.id:
             return
@@ -287,12 +287,12 @@ class DaemonReports(commands.Cog):
                     await reporting_channel.send(message)
 
         # User created a report but did not run the !dr create command
-        # Report auto-closes after no response within a 3 minute threshold
+        # Report auto-closes after no response is given within a 5 minute threshold
         def check(m):
             return m.author == user and m.content == "!dr create" and m.channel == created_channel
         
         try:
-            await self.bot.wait_for("message", check=check, timeout=180)
+            await self.bot.wait_for("message", check=check, timeout=300)
         
         except asyncio.TimeoutError:
             guildcfg = self.config.guild(guild)
@@ -313,7 +313,7 @@ class DaemonReports(commands.Cog):
                                 f"Report created by {user.mention} "
                                 f"has been closed by {self.bot.user.name}."
                             ),
-                            color=discord.Color.dark_green(), 
+                            color=discord.Color.dark_red(), 
                             timestamp=datetime.utcnow()
                         )
                         embed.set_thumbnail(url=user.avatar_url)
@@ -334,7 +334,7 @@ class DaemonReports(commands.Cog):
                         "Your daemon report has been closed "
                         f"by {self.bot.user.name}."
                     ),
-                    color=discord.Color.dark_green(), 
+                    color=discord.Color.dark_red(), 
                     timestamp=datetime.utcnow()
                 )
                 embed.add_field(name="Reason", value=reason)               
@@ -466,11 +466,14 @@ class DaemonReports(commands.Cog):
             )
 
             def check(message):
-                return message.author.id == ctx.message.author.id and message.content != ""
+                return message.author.id == ctx.message.author.id and message.author != self.bot and message.content != ""
 
             q1 = await ctx.send(
                 "`Please input your Node ID found in Multicraft:`"
             )
+            q1e = discord.Embed()
+            q1e.set_image(url="https://i.imgur.com/TzMP25B.png")
+            await ctx.send(embed=q1e)
             try:
                 r1 = await self.bot.wait_for(
                     "message",
@@ -643,7 +646,7 @@ class DaemonReports(commands.Cog):
                                 f"Report created by {author.mention if author else author_id} "
                                 f"has been closed by {ctx.author.mention}."
                             ),
-                            color=discord.Color.dark_green(), 
+                            color=discord.Color.dark_red(), 
                             timestamp=datetime.utcnow()
                         )
                         embed.set_thumbnail(url=author.avatar_url)
@@ -667,7 +670,7 @@ class DaemonReports(commands.Cog):
                         "Your daemon report has been closed " 
                         f"by {author.mention if author else author_id}."
                         ),
-                    color=discord.Color.dark_green(), 
+                    color=discord.Color.dark_red(), 
                     timestamp=datetime.utcnow()
                 )
                 if reason:
@@ -786,7 +789,7 @@ class DaemonReports(commands.Cog):
 
         if not is_admin and must_be_admin:
             await ctx.send(
-                "Only Staff can add/remove users to/from reports."
+                "Only Staff can add users to reports."
             )
             return
         elif not is_admin:
@@ -873,7 +876,7 @@ class DaemonReports(commands.Cog):
                             f"Report created by {user.mention if user else user_id} "
                             f"has been closed by {self.bot.user.name}."
                         ),
-                        color=discord.Color.dark_green(), 
+                        color=discord.Color.dark_red(), 
                         timestamp=datetime.utcnow()
                     )
                     embed.set_thumbnail(url=user.avatar_url)
@@ -894,7 +897,7 @@ class DaemonReports(commands.Cog):
                     "Your daemon report has been closed "
                     f"by {self.bot.user.name}."
                 ),
-                color=discord.Color.dark_green(), 
+                color=discord.Color.dark_red(), 
                 timestamp=datetime.utcnow()
             )
             embed.add_field(name="Reason", value=reason)               
@@ -987,7 +990,7 @@ class DaemonReports(commands.Cog):
 
         if not is_admin and must_be_admin:
             await ctx.send(
-                "Only Staff can add/remove users to/from reports."
+                "Only Staff can remove users from reports."
             )
             return
         elif not is_admin:
@@ -1069,7 +1072,7 @@ class DaemonReports(commands.Cog):
             color=discord.Color.blue()
         )
         drs1.set_author(name=f"{ctx.guild.name}", icon_url=ctx.guild.icon_url)
-        drs1.set_footer(text="Note: Subcommands are present in some of these. | Page 1/2")
+        drs1.set_footer(text="Note: Certain commands have subcommands. | Page 1/2")
 
         drs2 = discord.Embed(
             title="Daemon Reports System Settings:",
@@ -1083,7 +1086,7 @@ class DaemonReports(commands.Cog):
             color=discord.Color.blue()
         )
         drs2.set_author(name=f"{ctx.guild.name}", icon_url=ctx.guild.icon_url)
-        drs2.set_footer(text="Note: Subcommands are present in some of these. | Page 2/2")
+        drs2.set_footer(text="Note: Certain commands have subcommands. | Page 2/2")
 
         guild_settings = await self.config.guild(ctx.guild).all()
         channel_id, message_id = list(map(int, guild_settings["msg"].split("-")))
@@ -1115,7 +1118,7 @@ class DaemonReports(commands.Cog):
             f"[Archive Category]:  {archive_category}\n"
             f"[Archive Enabled]:   {guild_settings['archive']['enabled']}\n"
             f"[System Enabled]:    {guild_settings['enabled']}\n"
-            "```"   
+            "```" 
         )
 
         await menu(ctx, pages, DEFAULT_CONTROLS)
@@ -1245,7 +1248,7 @@ class DaemonReports(commands.Cog):
         e = discord.Embed(
             title="Daemon Reports Blacklist",
             description="",
-            color=0x000000, 
+            color=await ctx.embed_color(), 
             timestamp=datetime.utcnow()
         )
         for u in blacklist:
@@ -1418,9 +1421,9 @@ class DaemonReports(commands.Cog):
 
         await self.config.guild(ctx.guild).dm.set(yes_or_no)
         if yes_or_no:
-            await ctx.send("Users will now be DMed a message when their report is closed.")
+            await ctx.send("Users will receive a DM when their report is closed.")
         else:
-            await ctx.send("Users will not be DMed a message when their report is closed.")
+            await ctx.send("Users will not receive a DM when their report is closed.")
 
     @settings.command(name="purge")
     async def report_channel_purge(self, ctx, user: Optional[Union[int, discord.User]] = None):
@@ -1671,7 +1674,7 @@ class DaemonReports(commands.Cog):
                             f"Report created by {member.mention if member else member_id} "
                             f"has been closed by {self.bot.user.name}."
                         ),
-                        color=discord.Color.dark_green(), 
+                        color=discord.Color.dark_red(), 
                         timestamp=datetime.utcnow()
                     )
                     embed.add_field(name="Reason", value=reason)
@@ -1691,7 +1694,7 @@ class DaemonReports(commands.Cog):
                     "Your daemon report has been closed "
                     f"by {self.bot.user.name}."
                 ),
-                color=discord.Color.dark_green(), 
+                color=discord.Color.dark_red(), 
                 timestamp=datetime.utcnow()
             )
             embed.add_field(name="Reason", value=reason)               
