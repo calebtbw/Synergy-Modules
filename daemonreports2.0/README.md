@@ -12,7 +12,7 @@ These commands are for the Daemon Reports System for GGServers Discord.
 These commands are for the Daemon Reports Settings for GGServers Discord. Note: Certain commands have subcommands.
 
 - `!dr settings archive` - Customize settings for archiving daemon reports.
-- `!dr settings blacklist` - Add/Remove a user from the daemon reports blacklist.
+- `!dr settings blocklist` - Add/Remove a user from the daemon reports blocklist.
 - `!dr settings category` - Set the category to create new daemon reports under.
 - `!dr settings creationmessage` - Initial message sent when users create a daemon report.
 - `!dr settings disable` - Disable daemon reports system.
