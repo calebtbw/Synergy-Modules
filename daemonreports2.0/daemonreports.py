@@ -43,7 +43,7 @@ class DaemonReports(commands.Cog):
             "dm": False,
             # Miscellaneous
             "supportroles": [],
-            "blacklist": [],
+            "blocklist": [],
             "report": 0,
             "enabled": False,
             "created": {},
@@ -137,7 +137,7 @@ class DaemonReports(commands.Cog):
             await self.config.guild_from_id(payload.guild_id).enabled.set(False)
             return
 
-        if payload.user_id in guild_settings["blacklist"]:
+        if payload.user_id in guild_settings["blocklist"]:
             return
 
         user = guild.get_member(payload.user_id)
@@ -527,10 +527,24 @@ class DaemonReports(commands.Cog):
             await msg.delete()           
             await ctx.send(embed=e)
             await channel.edit(name=f"report-{nodeid}")
-            return await ctx.send(
+            await ctx.send(
                 "Thank you for reporting the issue. "
                 "Any updates to the report will be done so through this channel."
             )
+
+            reporting_channel = self.bot.get_channel(guild_settings["report"])
+            category = self.bot.get_channel((await guildcfg.category()))
+            channels = category.text_channels
+
+            dr = []
+            for channel in channels:
+                dr.append(f"{channel.name}")
+            
+            for i in range(1, len(dr)):
+                if dr[i] == dr[i-1]:
+                    await reporting_channel.send(
+                        "Similar Node IDs have been detected in open daemon reports."
+                    )
 
     @daemonreports.command(name="list")
     async def report_list(self, ctx):
@@ -1063,7 +1077,7 @@ class DaemonReports(commands.Cog):
         drs1 = discord.Embed(
             title="Daemon Reports System Settings:",
             description="**!dr settings archive** - Customize settings for archiving daemon reports.\n"
-                        "**!dr settings blacklist** - Add/Remove a user from the daemon reports blacklist.\n"
+                        "**!dr settings blocklist** - Add/Remove a user from the daemon reports blocklist.\n"
                         "**!dr settings category** - Set the category to create new daemon reports under.\n"
                         "**!dr settings creationmessage** - Initial message sent when users create a daemon report.\n"
                         "**!dr settings disable** - Disable daemon reports system.\n"
@@ -1118,7 +1132,7 @@ class DaemonReports(commands.Cog):
             f"[Archive Category]:  {archive_category}\n"
             f"[Archive Enabled]:   {guild_settings['archive']['enabled']}\n"
             f"[System Enabled]:    {guild_settings['enabled']}\n"
-            "```" 
+            "```"
         )
 
         await menu(ctx, pages, DEFAULT_CONTROLS)
@@ -1230,75 +1244,75 @@ class DaemonReports(commands.Cog):
             await ctx.send("Only Staff can add/remove users to/from reports.")
     
     @settings.group()
-    async def blacklist(self, ctx):
+    async def blocklist(self, ctx):
         """
-        Add/Remove a user to/from the daemon reports blacklist.
+        Add/Remove a user to/from the daemon reports blocklist.
         """
         pass
 
-    @blacklist.command(name="check")
-    async def blacklist_check(self, ctx):
+    @blocklist.command(name="check")
+    async def blocklist_check(self, ctx):
         """
-        Users blacklisted from creating daemon reports.
+        Users blocked from creating daemon reports.
         """
-        blacklist = await self.config.guild(ctx.guild).blacklist()
-        if not blacklist:
-            await ctx.send("No users have been blacklisted so far.")
+        blocklist = await self.config.guild(ctx.guild).blocklist()
+        if not blocklist:
+            await ctx.send("No users have been blocked so far.")
             return
         e = discord.Embed(
-            title="Daemon Reports Blacklist",
+            title="Daemon Reports Blocklist",
             description="",
             color=await ctx.embed_color(), 
             timestamp=datetime.utcnow()
         )
-        for u in blacklist:
+        for u in blocklist:
             e.description += f"<@{u}> "
         await ctx.send(embed=e)
 
-    @blacklist.command(name="add")
-    async def blacklist_add(self, ctx, *, user: discord.Member = None):
+    @blocklist.command(name="add")
+    async def blocklist_add(self, ctx, *, user: discord.Member = None):
         """
-        Add a user to the daemon reports blacklist.
+        Add a user to the daemon reports blocklist.
         """
         if user:
-            async with self.config.guild(ctx.guild).blacklist() as blacklist:
-                if user.id in blacklist:
+            async with self.config.guild(ctx.guild).blocklist() as blocklist:
+                if user.id in blocklist:
                     await ctx.send(
-                        f"{user.display_name} is already blacklisted from creating Daemon Reports."
+                        f"{user.display_name} is already blocked from creating Daemon Reports."
                     )
                     return
                 else:
-                    blacklist.append(user.id)
+                    blocklist.append(user.id)
                     await ctx.send(
-                        f"{user.display_name} is now blacklisted from creating Daemon Reports."
+                        f"{user.display_name} is now blocked from creating Daemon Reports."
                     )
         else:
             await ctx.send(
-                "Please run `!dr settings blacklist add <user>` "
-                "to blacklist a user from creating Daemon Reports."
+                "Please run `!dr settings blocklist add <user>` "
+                "to block a user from creating Daemon Reports."
             )
 
-    @blacklist.command(name="remove")
-    async def blacklist_remove(self, ctx, *, user: discord.Member = None):
+    @blocklist.command(name="remove")
+    async def blocklist_remove(self, ctx, *, user: discord.Member = None):
         """
-        Remove a user from the daemon reports blacklist.
+        Remove a user from the daemon reports blocklist.
         """
         if user:
-            async with self.config.guild(ctx.guild).blacklist() as blacklist:
-                if user.id in blacklist:
-                    blacklist.remove(user.id)
+            async with self.config.guild(ctx.guild).blocklist() as blocklist:
+                if user.id in blocklist:
+                    blocklist.remove(user.id)
                     await ctx.send(
-                        f"{user.display_name} has been removed from the Daemon Reports blacklist."
+                        f"{user.display_name} has been removed from the Daemon Reports blocklist."
                     )
                 else:
                     await ctx.send(
-                        f"{user.display_name} is not on the Daemon Reports blacklist."
+                        f"{user.display_name} is not on the Daemon Reports blocklist."
                     )
                     return
         else:
             await ctx.send(
-                "Please run `!dr settings blacklist remove <user>` "
-                "to remove a user from the Daemon Reports blacklist."
+                "Please run `!dr settings blocklist remove <user>` "
+                "to remove a user from the Daemon Reports blocklist."
             )      
 
     @settings.command()
