@@ -337,6 +337,7 @@ class DaemonReports(commands.Cog):
                     color=discord.Color.dark_red(), 
                     timestamp=datetime.utcnow()
                 )
+                embed.set_author(name=f"{guild.name}", icon_url=guild.icon_url)
                 embed.add_field(name="Reason", value=reason)               
                 with contextlib.suppress(discord.HTTPException):
                     await user.send(embed=embed)
@@ -449,102 +450,102 @@ class DaemonReports(commands.Cog):
         For users to input their Node ID and Error.
         To be used in the created channel only.
         """
-        guildcfg = self.config.guild(ctx.guild)
-        guild_settings = await guildcfg.all()
-        is_admin = await is_admin_or_superior(self.bot, ctx.author) or any(
-            [ur.id in guild_settings["supportroles"] for ur in ctx.author.roles]
+        # guildcfg = self.config.guild(ctx.guild)
+        # guild_settings = await guildcfg.all()
+        # is_admin = await is_admin_or_superior(self.bot, ctx.author) or any(
+        #     [ur.id in guild_settings["supportroles"] for ur in ctx.author.roles]
+        # )
+        # if is_admin:
+        #     await ctx.send(
+        #         "`!dr create` is to be ran by the user who created this report."
+        #     )
+        #     return
+        # else:
+        channel = ctx.message.channel
+        msg = await ctx.send(
+            "You will be asked 2 questions regarding your daemon report. Please respond accordingly."
         )
-        if is_admin:
+
+        def check(message):
+            return message.author.id == ctx.message.author.id and message.author != self.bot and message.content != ""
+
+        q1 = await ctx.send(
+            "`Please input your Node ID found in Multicraft:`"
+        )
+        q1e = discord.Embed()
+        q1e.set_image(url="https://i.imgur.com/TzMP25B.png")
+        await ctx.send(embed=q1e)
+        try:
+            r1 = await self.bot.wait_for(
+                "message",
+                timeout=90,
+                check=check
+            )
+            node = r1.content
+        
+        except asyncio.TimeoutError:
             await ctx.send(
-                "`!dr create` is to be ran by the user who created this report."
+                f"{ctx.author.mention} took too long to provide the requested information.\n"
+                "Please try again by running `!dr create`."
             )
             return
-        else:
-            channel = ctx.message.channel
-            msg = await ctx.send(
-                "You will be asked 2 questions regarding your daemon report. Please respond accordingly."
+        
+        q2 = await ctx.send(
+            "`Please state the Error Message:`"
+        )
+        try:
+            r2 = await self.bot.wait_for(
+                "message",
+                timeout=90,
+                check=check
             )
-
-            def check(message):
-                return message.author.id == ctx.message.author.id and message.author != self.bot and message.content != ""
-
-            q1 = await ctx.send(
-                "`Please input your Node ID found in Multicraft:`"
-            )
-            q1e = discord.Embed()
-            q1e.set_image(url="https://i.imgur.com/TzMP25B.png")
-            await ctx.send(embed=q1e)
-            try:
-                r1 = await self.bot.wait_for(
-                    "message",
-                    timeout=90,
-                    check=check
-                )
-                node = r1.content
-            
-            except asyncio.TimeoutError:
-                await ctx.send(
-                    f"{ctx.author.mention} took too long to provide the requested information.\n"
-                    "Please try again by running `!dr create`."
-                )
-                return
-            
-            q2 = await ctx.send(
-                "`Please state the Error Message:`"
-            )
-            try:
-                r2 = await self.bot.wait_for(
-                    "message",
-                    timeout=90,
-                    check=check
-                )
-                error = r2.content
-            
-            except asyncio.TimeoutError:
-                await ctx.send(
-                    f"{ctx.author.mention} took too long to provide the requested information.\n"
-                    "Please try again by running `!dr create`."
-                )
-                return
-            
-            nodeid = re.sub("[^0-9]", "", node)
-
-            e = discord.Embed(
-                title="Daemon Report Information",
-                description="For Staff to note the reported Node ID and Error Message.",
-                color=discord.Color.blue(),
-                timestamp=datetime.utcnow()
-            )
-
-            fields = [
-                ("Node ID:", f"{node}", False),
-                ("Error Message:", f"{error}", False)
-            ]
-
-            for name, value, inline in fields:
-                e.add_field(name=name, value=value, inline=inline)
-
-            await msg.delete()           
-            await ctx.send(embed=e)
-            await channel.edit(name=f"report-{nodeid}")
+            error = r2.content
+        
+        except asyncio.TimeoutError:
             await ctx.send(
-                "Thank you for reporting the issue. "
-                "Any updates to the report will be done so through this channel."
+                f"{ctx.author.mention} took too long to provide the requested information.\n"
+                "Please try again by running `!dr create`."
             )
+            return
+        
+        nodeid = re.sub("[^0-9]", "", node)
 
-            reporting_channel = self.bot.get_channel(guild_settings["report"])
-            category = self.bot.get_channel((await guildcfg.category()))
-            channels = category.text_channels
+        e = discord.Embed(
+            title="Daemon Report Information",
+            description="For Staff to note the reported Node ID and Error Message.",
+            color=discord.Color.blue(),
+            timestamp=datetime.utcnow()
+        )
 
-            dr = []
-            for channel in channels:
-                dr.append(f"{channel.name}")
-            
-            for i in range(1, len(dr)):
-                if dr[i] == dr[i-1]:
-                    await reporting_channel.send(
-                        "Similar Node IDs have been detected in open daemon reports."
-                    )
+        fields = [
+            ("Node ID:", f"{node}", False),
+            ("Error Message:", f"{error}", False)
+        ]
+
+        for name, value, inline in fields:
+            e.add_field(name=name, value=value, inline=inline)
+
+        await msg.delete()           
+        await ctx.send(embed=e)
+        await channel.edit(name=f"report-{nodeid}")
+        await ctx.send(
+            "Thank you for reporting the issue. "
+            "Any updates to the report will be done so through this channel."
+        )
+
+        reporting_channel = self.bot.get_channel(guild_settings["report"])
+        category = self.bot.get_channel((await guildcfg.category()))
+        channels = category.text_channels
+
+        dr = []
+        for channel in channels:
+            dr.append(f"{channel.name}")
+        
+        for i in range(1, len(dr)):
+            if dr[i] == dr[i-1]:
+                await reporting_channel.send(
+                    "Similar Node IDs have been detected in open daemon reports."
+                )
 
     @daemonreports.command(name="list")
     async def report_list(self, ctx):
@@ -687,6 +688,7 @@ class DaemonReports(commands.Cog):
                     color=discord.Color.dark_red(), 
                     timestamp=datetime.utcnow()
                 )
+                embed.set_author(name=f"{ctx.guild.name}", icon_url=ctx.guild.icon_url)
                 if reason:
                     embed.add_field(name="Reason", value=reason)
                 with contextlib.suppress(discord.HTTPException):
@@ -914,6 +916,7 @@ class DaemonReports(commands.Cog):
                 color=discord.Color.dark_red(), 
                 timestamp=datetime.utcnow()
             )
+            embed.set_author(name=f"{ctx.guild.name}", icon_url=ctx.guild.icon_url)
             embed.add_field(name="Reason", value=reason)               
             with contextlib.suppress(discord.HTTPException):
                 await user.send(embed=embed)
@@ -1243,7 +1246,7 @@ class DaemonReports(commands.Cog):
         else:
             await ctx.send("Only Staff can add/remove users to/from reports.")
     
-    @settings.group()
+    @settings.group(aliases=["blacklist"])
     async def blocklist(self, ctx):
         """
         Add/Remove a user to/from the daemon reports blocklist.
@@ -1711,6 +1714,7 @@ class DaemonReports(commands.Cog):
                 color=discord.Color.dark_red(), 
                 timestamp=datetime.utcnow()
             )
+            embed.set_author(name=f"{guild.name}", icon_url=guild.icon_url)
             embed.add_field(name="Reason", value=reason)               
             with contextlib.suppress(discord.HTTPException):
                 await member.send(embed=embed)
