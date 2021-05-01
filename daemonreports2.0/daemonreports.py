@@ -1690,7 +1690,7 @@ class DaemonReports(commands.Cog):
                     f"{channel.name} created by {member.mention if member else member_id} "
                     "will not be closed as added users are still present in the report."
                 ),
-                color=discord.Color.blue(),
+                color=discord.Color.orange(),
                 timestamp=datetime.utcnow()
             )
             await reporting_channel.send(embed=embed)
