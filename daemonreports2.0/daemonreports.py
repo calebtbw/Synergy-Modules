@@ -450,17 +450,8 @@ class DaemonReports(commands.Cog):
         For users to input their Node ID and Error.
         To be used in the created channel only.
         """
-        # guildcfg = self.config.guild(ctx.guild)
-        # guild_settings = await guildcfg.all()
-        # is_admin = await is_admin_or_superior(self.bot, ctx.author) or any(
-        #     [ur.id in guild_settings["supportroles"] for ur in ctx.author.roles]
-        # )
-        # if is_admin:
-        #     await ctx.send(
-        #         "`!dr create` is to be ran by the user who created this report."
-        #     )
-        #     return
-        # else:
+        guildcfg = self.config.guild(ctx.guild)
+        guild_settings = await guildcfg.all()
         channel = ctx.message.channel
         msg = await ctx.send(
             "You will be asked 2 questions regarding your daemon report. Please respond accordingly."
